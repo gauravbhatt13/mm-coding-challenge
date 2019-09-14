@@ -52,7 +52,7 @@ public class StatsAnalyzerTest {
     public void testSingleEvent() {
         StatsAnalyzer statsAnalyzer = new StatsAnalyzer(TEST_FILE);
         statsAnalyzer.init();
-        statsList = statsAnalyzer.getStatsList("00:00");
+        statsList = statsAnalyzer.getStatsList("00:09");
         Assert.assertEquals(0, statsList.get(0).getShots());
     }
     
