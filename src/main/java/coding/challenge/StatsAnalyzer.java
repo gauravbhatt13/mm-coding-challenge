@@ -55,6 +55,7 @@ public class StatsAnalyzer {
 
     /**
      * For every row in the input events file, corresponding 'Event' object will be created
+     *
      * @param eventRow
      */
     private void addEvent(String eventRow) {
@@ -73,12 +74,16 @@ public class StatsAnalyzer {
     /**
      * This method is the main method to interact with StatsAnalizer class. It will take an input as a time stamp,
      * convert it into a LocalTime object, filter the events, generate stats and return the stats list.
+     *
      * @param inputTime
      * @return Stats for each team
      */
     public List<Stats> getStatsList(String inputTime) {
         this.inputTimestamp = getTimestamp(inputTime); //CONVERTING INPUT STRING TIME TO JAVA LOCALTIME
-
+        if (this.inputTimestamp == null) {
+            System.out.println("Please provide a valid input between [00:00] and [90:00]");
+            System.exit(1);
+        }
         // FILTERING LIST BASED ON INPUT TIME TO INCLUDE EVENTS ONLY MEANT UPTO THE INPUT TIME
         this.filteredEventList = this.events.stream().filter(event ->
                 event.getEventType() != EventType.BREAK && (event.getTimestamp().equals(this.inputTimestamp) ||
@@ -90,6 +95,7 @@ public class StatsAnalyzer {
 
         // BELOW SNIPPET IS CREATING 'Stats' OBJECT FOR EACH TEAM
         List<Stats> statsList = new ArrayList<>();
+        float possessionTime = 0;
         for (String team : possessionMap.keySet()) {
             Stats stats = new Stats();
             stats.setInputTime(inputTime);
@@ -104,8 +110,13 @@ public class StatsAnalyzer {
             }
 
             // CALCULATING POSSESSION TIME PERCENTAGE
-            float possessionTime = (possessionMap.get(team) * 100) / Float.valueOf(this.inputTimestamp.toSecondOfDay());
-            stats.setPossessionTime(String.valueOf(Math.round(possessionTime)) + "%");  // ROUNDING PERCENTAGE
+            if(possessionTime == 0){
+                possessionTime = Math.round((possessionMap.get(team) * 100) /
+                        Float.valueOf(this.inputTimestamp.toSecondOfDay()));
+                stats.setPossessionTime(String.valueOf(possessionTime) + "%"); // ROUNDING PERCENTAGE
+            } else{
+                stats.setPossessionTime((100 - possessionTime) + "%");
+            }
             statsList.add(stats);
         }
         return statsList;
@@ -114,6 +125,7 @@ public class StatsAnalyzer {
     /**
      * This method will populate a Hashmap for SCORE, SHOT and POSSESS events. Map will contain team name as the key and
      * value can be a count of score/shots or duration of possession in seconds.
+     *
      * @param eventType
      * @return
      */
@@ -138,13 +150,14 @@ public class StatsAnalyzer {
 
     /**
      * Method to specifically calculate the durations of possession for each team.
+     *
      * @param statMap
      */
     private void getPossessionStats(Map<String, Integer> statMap) {
         int remainder = 0;
         int totalPossessionTime = 0;
         Event currentEvent = this.filteredEventList.get(0);
-        
+
         for (Event event : this.filteredEventList) {
             if (currentEvent.getEventType() == EventType.END || !currentEvent.getTeam().equals(event.getTeam())) {
                 // CALCULATING DURATION BETWEEN TWO EVENTS
@@ -180,17 +193,29 @@ public class StatsAnalyzer {
     /**
      * This is the core of the logic that converts 90 minutes into 1 hour 30 minutes format that
      * is understood by the java time APIs so that we can easily calculate the durations.
+     *
      * @param time
      * @return
      */
     private LocalTime getTimestamp(String time) {
-        String[] splitTime = time.split(TIME_SPLITTER);
-        String updatedTime = null;
-        if (Integer.valueOf(splitTime[0]) < 60) {
-            updatedTime = ZERO_HOUR + time;
-        } else {
-            updatedTime = ONE_HOUR + String.valueOf(Integer.valueOf(splitTime[0]) - 60) + ":" + splitTime[1];
+        LocalTime localTime = null;
+        String updatedTime;
+        try {
+            String[] splitTime = time.split(TIME_SPLITTER);
+            int minutes = Integer.valueOf(splitTime[0]);
+            int seconds = Integer.valueOf(splitTime[1]);
+            if (minutes > 90 || seconds > 59) {
+                throw new RuntimeException();
+            }
+            if (minutes < 60) {
+                updatedTime = ZERO_HOUR + (time.length() == 5 ? time : "0"+time);
+            } else {
+                updatedTime = ONE_HOUR + String.valueOf(minutes - 60) + ":" + splitTime[1];
+            }
+            localTime = LocalTime.parse(updatedTime, DateTimeFormatter.ofPattern(TIME_FORMAT));
+        } catch (Exception ex) {
+            System.out.println("Invalid input");
         }
-        return LocalTime.parse(updatedTime, DateTimeFormatter.ofPattern(TIME_FORMAT));
+        return localTime;
     }
 }

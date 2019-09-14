@@ -11,7 +11,7 @@ public class Main {
         statsAnalyzer.init(); //LOAD ALL EVENTS FROM CSV FILE.
 
         Scanner input = new Scanner(System.in);
-        System.out.print("input time (mm:ss) : ");
+        System.out.print("input time <Format:- (mm:ss) , Range:- [00:00] and [90:00]> : ");
         String inputTime = input.nextLine(); //READ INPUT TIME
 
         List<Stats> statsList = statsAnalyzer.getStatsList(inputTime);
