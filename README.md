@@ -9,6 +9,19 @@ StatsAnalyzer class takes filename as input in constructor and sets its eventsFi
 loads all the events from the csv file. Key logic here is the transformation of event time stamp for each event file 
 into java.time.LocalTime from java time APIs. This allows us to calculate duration between events.
 
+#### Assumptions
+1. Events will always be in sequence and not missing.
+2. Input format for timestamp can be (mm:ss) or (m:ss).
+3. Maximum allowed value is 90:00 and minimum is 00:00.
+
+#### Approach
+1. Read input events from source file.
+2. Read input timestamp from console (System.in)
+3. Validate input timestamp (check format and range)
+4. Calculate stats for each type of events and store in a map.
+5. Create stats objects for each team and populate stats calculated in step 4.
+6. Print stats on console (System.out)
+
 #### Duration Calculation Logic
 1. create a map to store (team, possessionTime) as key value pair.
 2. loop events
